@@ -21,7 +21,7 @@ class ClientTest extends PHPUnit_Framework_TestCase {
 			'data' => 'http://192.168.59.103:7474/db/data/'
 		];
 
-	    $this->assertEquals($default, $client->getRoot()->getResult());
+	    $this->assertEquals($default, $client->getRoot());
 	}
 
 	public function testCreatingElement()
@@ -29,8 +29,7 @@ class ClientTest extends PHPUnit_Framework_TestCase {
 		$client = $this->getClient();
 	    $q = 'CREATE (u:`User` {name: {name}, email: {email}}) RETURN u';
 	    $params = ['name' => 'Abed Halawi', 'email' => 'halawi.abed@gmail.com'];
-	    $response = $client->sendCypherQuery($q, $params, null, array('graph'));
-	    $result = $response->getResult();
+	    $result = $client->sendCypherQuery($q, $params);
 
 
 	    $this->assertInstanceOf('Neoxygen\NeoClient\Formatter\Result',$result);
@@ -40,11 +39,11 @@ class ClientTest extends PHPUnit_Framework_TestCase {
 
 	public function testCreatingElementsAndRelations()
 	{
-		$client = $this->getClient();
+			$client = $this->getClient();
+
 	    $q = 'CREATE (u:`User` {name: {name}, email: {email}})-[:LIKES]->(p:`Post` {title: {title}}) RETURN u, p';
 	    $params = ['name' => 'Abed Halawi', 'email' => 'halawi.abed@gmail.com', 'title' => 'Sss'];
-	    $response = $client->sendCypherQuery($q, $params, null, array('graph'));
-	    $result = $response->getResult();
+	    $result = $client->sendCypherQuery($q, $params);
 
 	    $this->assertInstanceOf('Neoxygen\NeoClient\Formatter\Result',$result);
 
@@ -61,10 +60,14 @@ class ClientTest extends PHPUnit_Framework_TestCase {
 	public function testFetchingElementByAttribute()
 	{
 		$client = $this->getClient();
+		// Reinsert the user as you delete the db after each test with the setUp() method
+		$q = 'MERGE (u:`User` {name: {name}, email: {email}}) RETURN u';
+	  $params = ['name' => 'Abed Halawi', 'email' => 'halawi.abed@gmail.com'];
+	  $client->sendCypherQuery($q, $params);
+	  
 		$q = 'MATCH (u:`User`) WHERE u.email = {email} RETURN u';
 
-		$response = $client->sendCypherQuery($q, ['email' => 'halawi.abed@gmail.com'], null, array('graph'));
-		$result = $response->getResult();
+		$result = $client->sendCypherQuery($q, ['email' => 'halawi.abed@gmail.com'], null);
 
 		$this->assertInstanceOf('Neoxygen\NeoClient\Formatter\Result', $result);
 		$this->assertGreaterThan(0, $result->getNodesCount());
@@ -80,7 +83,7 @@ class ClientTest extends PHPUnit_Framework_TestCase {
 	{
 		$client = $this->getClient();
 
-		$result = $client->sendCypherQuery('CREATE (n:Order) RETURN n')->getResult();
+		$result = $client->sendCypherQuery('CREATE (n:Order) RETURN n');
 		$this->assertTrue(in_array('Order', $client->getLabels()));
 
 		$client->renameLabel('Order', 'Product');
